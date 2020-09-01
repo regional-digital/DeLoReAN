@@ -2,9 +2,9 @@
 Change these for your own keys (see https://www.thethingsnetwork.org)
 Type has to be string
 """
-DEV_EUI = ''
-APP_EUI = ''
-APP_KEY = ''
+DEV_EUI = '0123456789ABCDEF'
+APP_EUI = '0123456789ABCDEF'
+APP_KEY = '0123456789ABCDEF0123456789ABCDEF'
 
 EU868_FREQUENCIES = [
     { "chan": 1, "fq": "868100000" },

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from network import LoRa
 import pycom
 import socket
@@ -33,14 +31,15 @@ def prepare_channels(lora, channel):
 '''
     Call back for handling RX packets
 '''
-def lora_cb(lora):
+def lora_cb(args):
+    lora, lora_socket = args[0], args[1]
     events = lora.events()
     if events & LoRa.RX_PACKET_EVENT:
         if lora_socket is not None:
             frame, port = lora_socket.recvfrom(512)
             print(port, frame)
     if events & LoRa.TX_PACKET_EVENT:
-        print("tx_time_on_air: {} ms @dr {}", lora.stats().tx_time_on_air, lora.stats().sftx)
+        print("TX ToA: %d ms @ datarate %d" % (lora.stats().tx_time_on_air, lora.stats().sftx))
 
 def join_otaa():
     # Setup LoRa
@@ -76,4 +75,6 @@ def join_otaa():
     # Set a callback for RX,TX and TX_FAILED events
     lora.callback(trigger=( LoRa.RX_PACKET_EVENT |
                             LoRa.TX_PACKET_EVENT |
-                            LoRa.TX_FAILED_EVENT  ), handler=lora_cb)
+                            LoRa.TX_FAILED_EVENT  ), handler=lora_cb, arg=(lora, lora_socket))
+
+    return lora_socket

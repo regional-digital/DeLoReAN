@@ -6,5 +6,7 @@
 """
 
 import lora
+import nfc
 
-lora.join_otaa()
+lora_socket = lora.join_otaa()
+nfc.start_thread(lora_socket)
