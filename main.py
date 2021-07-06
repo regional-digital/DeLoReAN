@@ -8,5 +8,6 @@
 import lora
 import nfc
 
+
 lora_socket = lora.join_otaa()
 nfc.start_thread(lora_socket)

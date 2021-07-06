@@ -5,6 +5,7 @@ import ubinascii
 import struct
 import time
 import config
+import machine # needed for hard reset
 
 '''
     Utility function to setup the lora channels
@@ -32,16 +33,20 @@ def prepare_channels(lora, channel):
     Call back for handling RX packets
 '''
 def lora_cb(args):
-    lora, lora_socket = args[0], args[1]
-    events = lora.events()
-    if events & LoRa.RX_PACKET_EVENT:
-        if lora_socket is not None:
-            frame, port = lora_socket.recvfrom(512)
-            print(port, frame)
-    if events & LoRa.TX_PACKET_EVENT:
-        print("TX ToA: %d ms @ datarate %d" % (lora.stats().tx_time_on_air, lora.stats().sftx))
+    try:
+        lora, lora_socket = args[0], args[1]
+        events = lora.events()
+        if events & LoRa.RX_PACKET_EVENT:
+            if lora_socket is not None:
+                frame, port = lora_socket.recvfrom(512)
+                print(port, frame)
+        if events & LoRa.TX_PACKET_EVENT:
+            print("TX ToA: %d ms @ datarate %d" % (lora.stats().tx_time_on_air, lora.stats().sftx))
+    except Exception as e:
+        print("Error in lora_cb():", e)
 
 def join_otaa():
+    t0 = time.time()
     # Setup LoRa
     lora = LoRa(mode=LoRa.LORAWAN, region=LoRa.EU868, device_class=LoRa.CLASS_C)
     # Prepare the 3 default channels
@@ -62,10 +67,16 @@ def join_otaa():
         pycom.rgbled(config.RGB_OFF)
         time.sleep(1)
         print('.', end='')
+        if (time.time() - t0) > 600:
+            # hard reset in case join takes too long
+            print("\nThreshold reached. Rebooting...")
+            time.sleep(0.1)
+            machine.reset()
+
 
     if lora.has_joined():
         pycom.rgbled(config.RGB_LORA_JOINED)
-        print("... LoRa joined")
+        print("... LoRa joined after {} s.".format(time.time() - t0))
 
     # Create a LoRa socket
     lora_socket = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
